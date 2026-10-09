@@ -5334,6 +5334,96 @@ body {
   display: none;
 }
 
+#adminModal.v5-page {
+  background: var(--report-paper);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  align-items: stretch;
+  padding: 0;
+}
+
+#adminModal.v5-page > div {
+  border: 0;
+  border-radius: 0;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+}
+
+#adminModal.v5-page #adminPanelDashboard {
+  max-height: none;
+}
+
+.v5-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: .5rem 0 1rem;
+}
+
+.v5-table th, .v5-table td {
+  border: 1px solid var(--report-pale);
+  text-align: left;
+  padding: .5rem;
+}
+
+.v5-table th {
+  background: var(--report-green);
+  color: var(--report-paper);
+}
+
+.v5-sub {
+  color: var(--report-green);
+  margin: .5rem 0;
+  font-weight: 800;
+}
+
+.v5-juz-grid {
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: .5rem;
+  margin-bottom: 1rem;
+  display: grid;
+}
+
+.v5-juz-grid button {
+  background: var(--report-pale);
+  color: var(--report-green);
+  border: 2px solid #0000;
+  border-radius: 1rem;
+  flex-direction: column;
+  align-items: center;
+  padding: .75rem .25rem;
+  display: flex;
+}
+
+.v5-juz-grid button strong {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.v5-juz-grid button[aria-pressed="true"] {
+  border-color: var(--report-gold);
+  background: var(--report-green);
+  color: var(--report-paper);
+}
+
+.v5-helper-toggle {
+  cursor: pointer;
+}
+
+.v5-helper-panel {
+  background: var(--report-pale);
+  border-radius: .75rem;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .4rem;
+  padding: .6rem;
+  display: grid;
+}
+
+.v5-helper-panel .v5-field {
+  grid-column: 1 / -1;
+}
+
 @property --tw-translate-x {
   syntax: "*";
   inherits: false;
@@ -7588,5 +7678,88 @@ document.addEventListener('DOMContentLoaded',()=> {
   const content=document.createElement('section'); content.id='coordinatorContent'; body.append(navigation,content);
   renderTeacherResults(document.getElementById('teacherSearchInput').value);
   if(currentTeacher) {renderSantriList(currentSantriList); renderLeaderboard();}
-});</script></body>
+});// Surah search, daily scoring, helper panel, coordinator page.
+const SURAH_NAMES = 'Al-Fatihah,Al-Baqarah,Ali Imran,An-Nisa,Al-Maidah,Al-Anam,Al-Araf,Al-Anfal,At-Taubah,Yunus,Hud,Yusuf,Ar-Rad,Ibrahim,Al-Hijr,An-Nahl,Al-Isra,Al-Kahfi,Maryam,Taha,Al-Anbiya,Al-Hajj,Al-Muminun,An-Nur,Al-Furqan,Asy-Syuara,An-Naml,Al-Qasas,Al-Ankabut,Ar-Rum,Luqman,As-Sajdah,Al-Ahzab,Saba,Fatir,Yasin,As-Saffat,Sad,Az-Zumar,Ghafir,Fussilat,Asy-Syura,Az-Zukhruf,Ad-Dukhan,Al-Jasiyah,Al-Ahqaf,Muhammad,Al-Fath,Al-Hujurat,Qaf,Az-Zariyat,At-Tur,An-Najm,Al-Qamar,Ar-Rahman,Al-Waqiah,Al-Hadid,Al-Mujadilah,Al-Hasyr,Al-Mumtahanah,As-Saff,Al-Jumuah,Al-Munafiqun,At-Tagabun,At-Talaq,At-Tahrim,Al-Mulk,Al-Qalam,Al-Haqqah,Al-Maarij,Nuh,Al-Jinn,Al-Muzzammil,Al-Muddassir,Al-Qiyamah,Al-Insan,Al-Mursalat,An-Naba,An-Naziat,Abasa,At-Takwir,Al-Infitar,Al-Mutaffifin,Al-Insyiqaq,Al-Buruj,At-Tariq,Al-Ala,Al-Gasyiyah,Al-Fajr,Al-Balad,Asy-Syams,Al-Lail,Ad-Duha,Asy-Syarh,At-Tin,Al-Alaq,Al-Qadr,Al-Bayyinah,Az-Zalzalah,Al-Adiyat,Al-Qariah,At-Takasur,Al-Asr,Al-Humazah,Al-Fil,Quraisy,Al-Maun,Al-Kausar,Al-Kafirun,An-Nasr,Al-Lahab,Al-Ikhlas,Al-Falaq,An-Nas'.split(',');
+const yes = v => v === 'Ya' || v === true || v === 'true';
+function predicateScore(p) { const s = String(p||'').toLowerCase(); return /mumtaz/.test(s)?15:/jiddan/.test(s)?12:/jayyid/.test(s)?9:/maqbul|cukup/.test(s)?5:s?3:0; }
+function dailyScore(report) {
+  if (!report) return {total:0, parts:[]};
+  const prayers = ['Subuh','Dzuhur','Ashar','Maghrib','Isya'].filter(p => yes(report['Sholat '+p])).length*4;
+  const sunnah = ['Sholat Tahajjud','Sholat Witir','Sholat Dhuha','Puasa Senin Kamis'].filter(k => yes(report[k])).length*3;
+  const helping = Math.min(8, ['Menyapu','Mengepel','Cuci Piring'].filter(k => yes(report[k])).length*2 + (report['Kegiatan Lain'] ? 2 : 0)) || (yes(report['Bantu Orang Tua']) ? 2 : 0);
+  const setoran = (report['Saba Surah'] || report['Tahsin Quran'] || report['Jilid Iqro'] ? 15 : 0) + (report['Sabqi'] ? 5 : 0) + (report['Manzil'] ? 5 : 0);
+  const quality = predicateScore(report.Predikat);
+  const noPhone = yes(report['Tidak Main HP']) ? 5 : 0;
+  const total = 10 + prayers + sunnah + helping + setoran + quality + noPhone;
+  return {total, parts:[`Setoran ${setoran}`,`Mutu ${quality}`,`Sholat ${prayers}`,`Sunnah ${sunnah}`,`Bantu ${helping}`,`HP ${noPhone}`]};
+}
+rankingRows = function() {
+  const rows = currentSantriList.map(student => {
+    const report = savedReports.find(r => reportMatches(r,student) && reportDate(r) === todayLocal());
+    const s = dailyScore(report);
+    return {student, report, score:s.total, parts:s.parts, juz:factualJuz(student) ?? -1};
+  }).sort((a,b) => b.score-a.score || b.juz-a.juz || a.student.nama.localeCompare(b.student.nama));
+  const top = Math.max(...rows.map(r => r.juz), 0);
+  rows.forEach(r => r.mostHafalan = top > 0 && r.juz === top);
+  return rows;
+};
+const baseCanvas = makeReportCanvas;
+makeReportCanvas = async function() {
+  const canvas = await baseCanvas(), ctx = canvas.getContext('2d'), rows = rankingRows();
+  const css = getComputedStyle(document.documentElement), gold = css.getPropertyValue('--report-gold').trim(), green = css.getPropertyValue('--report-green').trim(), ink = css.getPropertyValue('--report-ink').trim();
+  ctx.textAlign = 'right';
+  rows.forEach((row,index) => {
+    const x=30+(index%2)*515, y=636+Math.floor(index/2)*142;
+    ctx.font = '800 22px "Plus Jakarta Sans",sans-serif'; ctx.fillStyle = green; ctx.fillText(`${row.score} poin`, x+495, y+118);
+    if (row.mostHafalan) { ctx.fillStyle = gold; ctx.beginPath(); ctx.roundRect(x+305,y+4,190,24,12); ctx.fill(); ctx.fillStyle = ink; ctx.font = '800 15px "Plus Jakarta Sans",sans-serif'; ctx.fillText('★ HAFALAN TERBANYAK', x+487, y+21); }
+  });
+  ctx.textAlign = 'left';
+  return canvas;
+};
+let hafalanBox = null;
+function iqroLevel(student) {
+  if (!stillIqro(student)) return 'quran';
+  const n = String(latestStudentReport(student)?.['Jilid Iqro'] || '').match(/[1-6]/);
+  return n ? n[0] : 'none';
+}
+const coordinatorRender = renderAdminDashboard;
+renderAdminDashboard = function() {
+  document.getElementById('adminModal')?.classList.add('v5-page');
+  if (adminView === 'teachers') return coordinatorRender();
+  const content = document.getElementById('coordinatorContent'); if (!content) return;
+  document.querySelectorAll('[data-admin-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.adminView===adminView)));
+  const row = s => `<div class="v5-evaluation-student"><div><strong>${escapeText(s.nama)}</strong><p class="v5-achievement ${stillIqro(s)&&Number(s.kelas_sd)>=3?'v5-target':''}">${escapeText(achievement(s))}</p><small>Kelas SD ${escapeText(s.kelas_sd)} · ${escapeText(s.rombel_sd)} · ${escapeText(s.kelas)} · Wali: ${escapeText(s.wali)}</small></div></div>`;
+  if (adminView === 'quran') {
+    const groups = {}; ALL_STUDENTS.forEach(s => (groups[iqroLevel(s)] ??= []).push(s));
+    const keys = [['1',"Iqro' 1"],['2',"Iqro' 2"],['3',"Iqro' 3"],['4',"Iqro' 4"],['5',"Iqro' 5"],['6',"Iqro' 6"],['none',"Iqro' belum dicatat"],['quran','Sudah Al-Qur’an']];
+    content.innerHTML = `<div class="v5-evaluation-title"><h4>Jenjang Bacaan Santri</h4><p>${ALL_STUDENTS.length} santri</p></div><table class="v5-table"><thead><tr><th>Jenjang</th><th>Jumlah</th><th>Kelas SD 3+</th></tr></thead><tbody>${keys.map(([k,l]) => `<tr><td>${l}</td><td>${(groups[k]||[]).length}</td><td class="${k!=='quran'?'v5-target':''}">${k==='quran'?'-':(groups[k]||[]).filter(s=>Number(s.kelas_sd)>=3).length}</td></tr>`).join('')}</tbody></table><h4 class="v5-sub">Target kelulusan (Iqro', kelas SD 3+)</h4>` + ALL_STUDENTS.filter(s=>stillIqro(s)&&Number(s.kelas_sd)>=3).map(row).join('');
+    return;
+  }
+  const buckets = {}; ALL_STUDENTS.forEach(s => { const j = factualJuz(s); const k = j===null ? 'none' : String(Math.floor(j)); (buckets[k] ??= []).push(s); });
+  const max = Math.max(0, ...Object.keys(buckets).filter(k=>k!=='none').map(Number));
+  const keys = [...Array(max+1).keys()].map(String).reverse().filter(k => buckets[k]).concat(buckets.none ? ['none'] : []);
+  content.innerHTML = `<div class="v5-evaluation-title"><h4>Pencapaian Hafalan Santri</h4><p>Pilih kotak juz untuk melihat santri</p></div><div class="v5-juz-grid">${keys.map(k => `<button data-juz="${k}" aria-pressed="${hafalanBox===k}"><strong>${k==='none'?'—':k==='0'?'< 1':k}</strong><small>${k==='none'?'Belum dicatat':'Juz'}</small><span>${buckets[k].length} santri</span></button>`).join('')}</div><div id="v5JuzList"></div>`;
+  content.querySelectorAll('[data-juz]').forEach(b => b.onclick = () => { hafalanBox = b.dataset.juz; renderAdminDashboard(); });
+  if (hafalanBox && buckets[hafalanBox]) document.getElementById('v5JuzList').innerHTML = buckets[hafalanBox].sort((a,b)=>(factualJuz(b)??-1)-(factualJuz(a)??-1)).map(row).join('');
+};
+const closeAdminBase = closeAdminModal;
+closeAdminModal = function() { closeAdminBase(); document.getElementById('adminModal')?.classList.remove('v5-page'); };
+function syncHelperPanel() { const p = document.getElementById('v5HelperPanel'); if (p) p.classList.toggle('hidden', !document.getElementById('bantuOrangTua')?.checked); }
+const resetWithPanel = resetStudentFields;
+resetStudentFields = function() { resetWithPanel(); syncHelperPanel(); };
+document.addEventListener('DOMContentLoaded', () => {
+  const list = document.createElement('datalist'); list.id = 'v5SurahList';
+  list.innerHTML = SURAH_NAMES.map((n,i) => `<option value="${n}">${i+1}. ${n}</option>`).join(''); document.body.append(list);
+  ['inputSabaSurahAwal','inputSabaSurahAkhir','inputSabqiSurah','inputTahsinQuranSurahAkhir','inputTahsinAwal','inputTahsinAkhir'].forEach(id => { const el = document.getElementById(id); if (el) { el.setAttribute('list','v5SurahList'); el.autocomplete = 'off'; el.placeholder = 'Cari surah…'; } });
+  const main = document.getElementById('bantuOrangTua'), mainLabel = main?.closest('label');
+  if (mainLabel) {
+    const panel = document.createElement('div'); panel.id = 'v5HelperPanel'; panel.className = 'v5-helper-panel hidden';
+    helperIds.forEach(id => { const l = document.getElementById(id)?.closest('label'); if (l) panel.append(l); });
+    const other = document.getElementById('ibadahLain')?.closest('label'); if (other) panel.append(other);
+    mainLabel.after(panel); mainLabel.classList.add('v5-helper-toggle');
+    main.addEventListener('change', () => { if (!main.checked) { helperIds.forEach(id => document.getElementById(id).checked = false); document.getElementById('ibadahLain').value = ''; } syncHelperPanel(); });
+    helperIds.forEach(id => document.getElementById(id)?.addEventListener('change', syncHelperPanel));
+  }
+});
+</script></body>
 </html>
